@@ -170,7 +170,7 @@ void ascii_to_hx(uint8_t *modbus_response, int register_count)
         strcat(hex_char, temp);
         // printf("\nhex char= %s", hex_char);
         int number = (int)strtol(hex_char, NULL, 16);
-        // printf("\nHEX number %d: %02X", i, number);
+         printf("\nHEX number %d: %02X", i, number);
         ascii_conv[i] = number;
         index += 2;
     }
@@ -181,14 +181,15 @@ void ascii_to_hx(uint8_t *modbus_response, int register_count)
 
     for (int i = 0; i < register_count / 2; i++)
     {
-        *((char *)&mbdata + 0) = ascii_conv[index + 3];
-        *((char *)&mbdata + 1) = ascii_conv[index + 2];
-        *((char *)&mbdata + 2) = ascii_conv[index + 1];
-        *((char *)&mbdata + 3) = ascii_conv[index];
+        
+        *((char *)&mbdata + 0) = ascii_conv[index + 1];
+        *((char *)&mbdata + 1) = ascii_conv[index];
+        *((char *)&mbdata + 2) = ascii_conv[index + 3];
+        *((char *)&mbdata + 3) = ascii_conv[index + 2];
 
         index = index + 4;
         response[i] = mbdata;
-        // printf("\nHEX number %d: %f", i, response[i]);
+         printf("\nHEX number %d: %f", i, response[i]);
     }
      json_string_maker_float(register_count, response, 0, NULL, NULL);
     
