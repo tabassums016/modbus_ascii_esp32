@@ -13,6 +13,7 @@
 #include "driver/uart.h"
 #include "string.h"
 #include "driver/gpio.h"
+#define REG_COUNT 6
 
 static const int RX_BUF_SIZE = 2048;
 
@@ -20,7 +21,7 @@ static const int RX_BUF_SIZE = 2048;
 #define RXD_PIN (GPIO_NUM_12)
 // char query[1][11]={{ 0x01, 0x0F, 0x00, 0x00, 0X00, 0X0A, 0X02, 0XFF, 0X03}};
 // char query[13] = {0x3A, 0x30, 0x31, 0x30, 0X33, 0X30,  0X30, 0X31, 0X35, 0x30, 0x30, 0x30, 0x41};
-char query[6] = {0x01, 0x03, 0x00, 0x15, 0x00, 0x14};
+char query[6] = {0x01, 0x03, 0x00, 0x14, 0x00, 0x06};
 void sendData(char query[], int len);
 void json_string_maker_float(int register_count, float slave_response[], int8_t query_index, char slave_id_array[], char func_code_array[]);
 
@@ -153,14 +154,14 @@ void send_modbus_query(char query[], int len) //++ Function to send Modbus Queri
     const int txBytes = uart_write_bytes(UART_NUM_2, query_send[0], len);
     printf("\nSending query %d bytes\n", txBytes);
 }
-void ascii_to_hx(uint8_t *modbus_response)
+void ascii_to_hx(uint8_t *modbus_response, int register_count)
 {
     
     int index = 1;
     char hex_char[5];
     char temp[5];
-    uint8_t ascii_conv[20 * 2];
-    for (int i = 0; i < 20 * 2 +2; i++)
+    uint8_t ascii_conv[register_count * 2];
+    for (int i = 0; i < register_count * 2 +2; i++)
     {
         memset(temp, 0, sizeof(temp));
         memset(hex_char, 0, sizeof(hex_char));
@@ -174,11 +175,11 @@ void ascii_to_hx(uint8_t *modbus_response)
         index += 2;
     }
 
-    float response[20 / 2];
+    float response[register_count / 2];
     index = 3;
     float mbdata = 0;
 
-    for (int i = 0; i < 20 / 2; i++)
+    for (int i = 0; i < register_count / 2; i++)
     {
         *((char *)&mbdata + 0) = ascii_conv[index + 3];
         *((char *)&mbdata + 1) = ascii_conv[index + 2];
@@ -189,7 +190,7 @@ void ascii_to_hx(uint8_t *modbus_response)
         response[i] = mbdata;
         // printf("\nHEX number %d: %f", i, response[i]);
     }
-     json_string_maker_float(20, response, 0, NULL, NULL);
+     json_string_maker_float(register_count, response, 0, NULL, NULL);
     
 }
 
@@ -258,7 +259,7 @@ static void rx_task(void *arg)
             ESP_LOGI(RX_TASK_TAG, "Read %d bytes: '%s'", rxBytes, data);
             ESP_LOG_BUFFER_HEXDUMP(RX_TASK_TAG, data, rxBytes, ESP_LOG_INFO);
 
-            ascii_to_hx(data);
+            ascii_to_hx(data, REG_COUNT);
         }
     }
     free(data);
